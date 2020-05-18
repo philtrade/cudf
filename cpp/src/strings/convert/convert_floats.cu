@@ -18,7 +18,6 @@
 #include <cudf/column/column_factories.hpp>
 #include <cudf/detail/nvtx/ranges.hpp>
 #include <cudf/strings/convert/convert_floats.hpp>
-#include <cudf/strings/detail/converters.hpp>
 #include <cudf/strings/detail/utilities.hpp>
 #include <cudf/strings/string_view.cuh>
 #include <cudf/strings/strings_column_view.hpp>
@@ -165,10 +164,11 @@ struct dispatch_to_floats_fn {
 }  // namespace
 
 // This will convert a strings column into any float column type.
-std::unique_ptr<column> to_floats(strings_column_view const& strings,
-                                  data_type output_type,
-                                  cudaStream_t stream,
-                                  rmm::mr::device_memory_resource* mr)
+std::unique_ptr<column> to_floats(
+  strings_column_view const& strings,
+  data_type output_type,
+  rmm::mr::device_memory_resource* mr = rmm::mr::get_default_resource(),
+  cudaStream_t stream                 = 0)
 {
   size_type strings_count = strings.size();
   if (strings_count == 0) return make_numeric_column(output_type, 0);
@@ -198,7 +198,7 @@ std::unique_ptr<column> to_floats(strings_column_view const& strings,
                                   rmm::mr::device_memory_resource* mr)
 {
   CUDF_FUNC_RANGE();
-  return detail::to_floats(strings, output_type, cudaStream_t{}, mr);
+  return detail::to_floats(strings, output_type, mr);
 }
 
 namespace detail {
@@ -510,9 +510,10 @@ struct dispatch_from_floats_fn {
 }  // namespace
 
 // This will convert all float column types into a strings column.
-std::unique_ptr<column> from_floats(column_view const& floats,
-                                    cudaStream_t stream,
-                                    rmm::mr::device_memory_resource* mr)
+std::unique_ptr<column> from_floats(
+  column_view const& floats,
+  rmm::mr::device_memory_resource* mr = rmm::mr::get_default_resource(),
+  cudaStream_t stream                 = 0)
 {
   size_type strings_count = floats.size();
   if (strings_count == 0) return detail::make_empty_strings_column(mr, stream);
@@ -528,7 +529,7 @@ std::unique_ptr<column> from_floats(column_view const& floats,
 std::unique_ptr<column> from_floats(column_view const& floats, rmm::mr::device_memory_resource* mr)
 {
   CUDF_FUNC_RANGE();
-  return detail::from_floats(floats, cudaStream_t{}, mr);
+  return detail::from_floats(floats, mr);
 }
 
 }  // namespace strings
